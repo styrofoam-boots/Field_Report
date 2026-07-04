@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Field Report — Fieldwork Route Overlay Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#0F2A28;
+    --panel:#163A36;
+    --teal:#77B9BB;
+    --coral:#F48876;
+    --coral-dim:#D46B59;
+    --cream:#F5F3EE;
+    --line:rgba(245,243,238,0.14);
+    --mono: 'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg-deep);
+    color:var(--cream);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+  }
+  .topo{
+    position:fixed; inset:0; z-index:0; opacity:0.9; pointer-events:none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000"><path d="M480.0 260.0L496.6 268.6L507.7 280.0L510.6 291.9L505.4 301.9L494.3 308.4L480.8 311.7L467.8 313.0L456.7 314.0L447.1 315.6L438.2 317.6L429.1 318.7L420.0 317.4L411.7 313.5L404.9 307.8L399.5 302.1L394.3 297.8L387.9 295.5L379.5 294.4L369.9 292.7L361.6 288.7L357.6 282.0L360.1 273.7L369.0 265.7L382.0 260.0L394.8 257.2L403.3 256.2L405.4 254.8L401.4 250.9L394.3 243.2L387.5 232.4L384.2 220.4L385.7 209.5L391.3 201.1L399.7 195.5L409.4 191.8L420.0 189.0L431.4 186.7L443.4 185.7L455.3 187.5L465.3 193.3L471.5 202.9L472.8 215.1L470.0 227.4L465.5 237.7L462.8 244.9L464.5 249.9L470.9 254.3L480.0 260.0Z" fill="none" stroke="%23F5F3EE" stroke-opacity="0.1" stroke-width="1.4"/><path d="M582.6 260.0L587.2 278.7L581.6 296.8L566.9 311.7L546.6 322.1L525.0 328.5L505.6 332.7L489.8 337.3L476.8 343.6L464.6 351.5L451.3 359.3L436.2 364.6L420.0 366.0L404.0 363.1L389.4 357.2L376.1 350.0L363.7 342.8L351.5 335.9L339.6 328.3L329.4 319.1L322.8 307.7L321.3 294.8L324.5 281.8L330.2 270.0L335.1 260.0L335.8 250.6L331.3 239.8L322.9 225.8L314.2 208.1L309.4 187.9L311.9 168.1L322.4 151.9L339.4 141.3L359.9 136.7L381.1 136.6L401.3 139.0L420.0 142.1L437.7 145.5L454.7 149.8L470.5 156.4L484.0 165.8L494.2 177.8L501.4 190.8L507.0 203.3L513.0 214.4L521.1 224.4L531.3 234.7L541.4 246.4L548.2 260.0Z" fill="none" stroke="%23F5F3EE" stroke-opacity="0.045" stroke-width="1.0"/><path d="M640.8 260.0L630.9 283.6L613.2 304.0L591.3 320.3L569.3 333.3L550.2 344.9L534.7 357.5L521.3 372.2L507.2 388.4L490.1 403.8L468.9 415.1L444.8 420.0L420.0 418.0L396.7 410.5L375.9 400.0L357.2 388.8L339.6 378.4L322.2 368.3L305.2 357.6L289.6 345.1L276.8 330.3L267.4 313.7L260.4 296.4L254.0 278.6L246.4 260.0L237.2 239.5L228.1 216.3L222.6 190.5L224.4 164.0L235.7 139.8L256.6 121.1L284.3 109.7L315.0 105.5L345.0 106.2L372.3 108.8L396.9 110.7L420.0 111.2L443.0 111.2L466.4 112.7L489.3 117.7L510.4 126.9L528.5 139.8L543.7 154.9L556.9 170.7L569.3 186.7L581.2 203.2L591.4 221.0L597.7 240.1L597.9 260.0Z" fill="none" stroke="%23F5F3EE" stroke-opacity="0.045" stroke-width="1.0"/><path d="M669.5 260.0L657.8 286.6L642.2 310.6L625.8 332.5L610.7 353.6L597.1 375.5L583.2 398.7L566.4 422.1L544.3 443.0L516.6 458.2L484.8 465.4L451.7 464.4L420.0 457.1L391.1 446.7L364.4 436.4L338.2 427.8L311.0 420.5L282.2 412.6L253.1 401.9L225.6 386.8L201.9 367.1L182.8 343.5L168.0 317.4L156.6 289.5L148.2 260.0L143.5 229.1L144.7 197.3L154.2 166.4L173.1 138.8L200.7 117.0L234.2 102.1L269.6 93.4L303.6 88.6L334.4 84.4L362.8 78.6L390.7 70.8L420.0 62.8L451.4 57.5L483.7 58.0L514.7 65.6L542.4 79.9L565.5 98.8L584.7 120.0L601.2 141.8L616.4 163.6L630.3 185.9L641.7 209.5L648.9 234.4L650.6 260.0Z" fill="none" stroke="%23F5F3EE" stroke-opacity="0.045" stroke-width="1.0"/><path d="M713.7 260.0L707.8 292.2L698.1 323.3L686.2 353.7L672.5 383.9L656.2 414.0L635.2 443.0L608.1 468.4L574.7 487.8L536.6 499.3L496.7 503.3L457.4 501.6L420.0 497.7L383.7 494.2L346.7 492.4L307.3 491.2L265.3 487.7L222.5 478.8L182.1 462.2L147.7 437.6L121.3 406.6L103.3 371.5L92.6 334.6L87.6 297.2L87.7 260.0L93.1 223.4L105.1 188.3L124.5 156.0L151.0 128.0L182.5 105.1L216.2 86.8L249.5 71.2L281.4 56.0L312.7 39.8L345.3 23.0L380.9 7.8L420.0 -2.2L460.9 -4.1L500.9 3.5L537.1 19.7L568.3 41.6L595.0 66.1L619.2 90.7L642.8 114.7L666.7 139.0L689.9 165.0L710.2 193.9L725.1 225.9L733.1 260.0Z" fill="none" stroke="%23F5F3EE" stroke-opacity="0.1" stroke-width="1.4"/><path d="M781.7 260.0L776.1 299.9L764.9 338.6L749.7 376.1L730.8 412.5L707.3 447.4L677.9 479.2L642.3 506.2L601.4 527.1L557.2 541.6L511.8 551.3L466.2 558.4L420.0 564.7L371.9 570.6L320.9 574.4L267.5 572.9L214.4 562.7L165.5 542.0L124.7 511.0L94.6 472.3L75.0 429.3L64.1 385.3L58.9 342.2L57.3 300.6L58.6 260.0L63.9 220.2L74.9 181.4L92.5 144.7L116.3 111.0L144.9 80.6L176.3 52.8L209.4 26.7L244.5 1.6L282.6 -21.9L324.9 -41.7L371.2 -54.8L420.0 -58.7L468.4 -52.6L513.9 -37.7L555.1 -17.2L592.8 5.5L629.1 28.3L666.1 50.8L704.3 74.6L742.2 101.9L776.5 134.5L803.3 172.7L819.6 215.3L824.7 260.0Z" fill="none" stroke="%23F5F3EE" stroke-opacity="0.045" stroke-width="1.0"/><path d="M846.0 260.0L836.1 306.6L821.9 351.5L804.6 395.4L783.6 438.4L757.3 480.0L724.3 518.7L684.2 552.7L638.1 581.0L587.5 603.7L534.0 621.7L478.2 635.9L420.0 646.1L359.4 651.0L297.7 647.9L237.6 634.4L182.8 609.2L137.0 573.5L101.9 530.4L76.9 483.8L59.3 437.0L45.5 391.8L33.0 348.1L21.6 304.6L12.9 260.0L10.2 214.1L16.1 168.0L31.7 123.3L56.2 81.5L87.5 43.2L123.7 8.2L163.8 -23.8L207.6 -52.7L255.7 -77.2L308.1 -95.1L363.5 -104.6L420.0 -105.1L475.4 -97.4L528.4 -84.0L579.6 -67.5L630.3 -49.6L681.8 -30.0L733.9 -6.8L784.2 22.5L828.4 59.6L862.0 104.4L881.8 154.8L887.1 207.7L880.0 260.0Z" fill="none" stroke="%23F5F3EE" stroke-opacity="0.045" stroke-width="1.0"/><path d="M899.1 260.0L892.2 312.8L882.9 365.4L870.2 418.5L851.4 471.7L823.7 523.3L785.5 570.7L737.4 611.6L681.2 644.6L619.7 669.8L554.8 687.8L488.0 699.0L420.0 703.0L352.1 698.5L286.3 684.0L225.5 659.1L172.2 624.8L127.5 584.1L90.5 540.1L58.6 495.7L29.0 451.9L-0.1 407.9L-28.1 362.1L-51.9 312.8L-67.3 260.0L-70.7 205.1L-60.4 150.6L-37.4 99.0L-4.7 51.6L34.6 8.6L78.1 -30.6L125.1 -66.6L176.1 -99.1L231.6 -126.6L291.6 -147.2L355.0 -159.4L420.0 -163.3L485.0 -159.8L549.4 -150.6L613.4 -136.9L677.0 -118.4L739.2 -93.6L797.2 -60.6L846.9 -18.4L884.2 32.2L906.6 88.7L914.3 147.4L910.1 205.2L898.3 260.0Z" fill="none" stroke="%23F5F3EE" stroke-opacity="0.045" stroke-width="1.0"/><path d="M965.9 260.0L968.7 321.4L966.4 384.4L955.1 448.4L931.4 511.0L893.4 568.8L841.8 618.5L779.6 658.3L710.6 687.9L638.5 708.5L565.5 721.6L492.5 728.1L420.0 727.8L348.8 719.8L280.3 703.2L216.2 678.3L157.4 646.6L103.9 610.1L54.3 570.9L6.9 529.4L-38.7 485.1L-81.0 436.4L-116.5 382.2L-140.7 322.8L-150.2 260.0L-143.7 196.9L-122.8 136.4L-91.2 80.0L-53.0 27.9L-10.9 -21.1L34.2 -67.9L83.7 -112.5L139.2 -153.4L201.7 -187.9L270.7 -213.5L344.3 -228.7L420.0 -233.5L495.7 -228.9L570.2 -216.4L642.5 -196.5L711.4 -169.0L774.8 -133.0L829.6 -88.1L872.8 -35.4L902.9 23.0L920.6 83.8L928.6 144.2L931.0 202.8L931.0 260.0Z" fill="none" stroke="%23F5F3EE" stroke-opacity="0.1" stroke-width="1.4"/><path d="M1052.2 260.0L1057.6 331.3L1050.7 403.6L1028.3 474.2L989.1 539.3L934.6 595.6L868.6 641.4L796.2 676.7L721.3 703.6L646.4 724.6L571.6 741.1L496.4 753.1L420.0 759.4L342.9 757.7L266.5 746.9L192.5 726.8L122.2 698.5L55.8 663.4L-6.8 622.7L-65.2 576.5L-118.0 524.0L-161.9 464.9L-193.6 399.7L-210.0 330.5L-210.5 260.0L-196.9 191.0L-172.9 125.0L-142.3 62.0L-107.4 1.2L-68.3 -58.5L-23.0 -116.5L31.0 -170.9L95.3 -218.0L169.4 -254.3L250.6 -277.5L335.3 -287.2L420.0 -284.8L502.5 -272.6L581.6 -252.7L656.7 -225.7L726.8 -191.7L790.4 -150.3L845.5 -101.6L890.7 -47.0L926.3 11.5L954.0 72.0L976.2 133.3L994.7 195.7L1009.5 260.0Z" fill="none" stroke="%23F5F3EE" stroke-opacity="0.045" stroke-width="1.0"/><path d="M1387.3 700.0L1372.1 710.3L1353.5 716.7L1335.9 719.7L1322.8 721.0L1315.1 722.9L1311.3 726.6L1308.9 732.0L1305.7 737.8L1300.7 742.4L1294.1 744.9L1287.0 745.4L1280.0 745.4L1272.9 746.0L1264.9 747.8L1255.6 750.0L1245.5 750.8L1236.1 748.7L1229.5 742.9L1227.0 734.6L1228.1 725.5L1230.5 717.4L1230.8 711.2L1226.3 706.0L1216.2 700.0L1202.8 691.4L1189.9 679.5L1181.8 665.4L1181.5 651.7L1189.1 640.7L1202.7 634.3L1218.9 632.4L1234.8 633.5L1248.8 635.9L1260.6 638.4L1270.8 640.8L1280.0 644.0L1287.9 649.0L1293.9 655.9L1297.7 663.7L1299.9 670.6L1302.5 675.0L1307.7 676.4L1316.8 676.0L1329.3 675.8L1342.6 678.0L1353.0 683.4L1357.3 691.3L1354.5 700.0Z" fill="none" stroke="%23F5F3EE" stroke-opacity="0.1" stroke-width="1.4"/><path d="M1403.6 700.0L1386.9 712.0L1372.8 721.1L1364.2 729.6L1360.9 739.7L1360.5 752.5L1359.4 767.5L1354.6 782.6L1344.6 795.1L1330.2 803.1L1313.5 806.4L1296.4 806.1L1280.0 804.5L1264.1 802.9L1247.9 801.8L1231.2 800.1L1214.5 796.4L1199.1 789.6L1186.2 779.7L1175.9 767.9L1167.1 755.4L1157.6 743.1L1146.0 730.5L1132.3 716.5L1118.9 700.0L1109.5 680.9L1108.0 660.8L1116.3 642.4L1133.8 628.3L1157.3 620.0L1182.4 617.0L1205.3 617.2L1224.2 617.9L1239.5 616.9L1252.8 613.7L1266.0 609.6L1280.0 606.5L1294.6 605.8L1309.0 608.1L1322.7 612.3L1336.2 617.3L1350.3 622.2L1365.7 627.2L1382.0 633.5L1397.3 642.4L1408.8 654.7L1414.1 669.5L1412.7 685.2L1406.1 700.0Z" fill="none" stroke="%23F5F3EE" stroke-opacity="0.045" stroke-width="1.0"/><path d="M1435.8 700.0L1431.3 716.9L1430.3 734.2L1432.1 753.5L1433.7 775.4L1431.4 798.8L1422.2 820.9L1405.3 838.8L1382.2 850.4L1355.9 855.7L1329.3 856.3L1304.0 855.1L1280.0 854.4L1256.0 855.0L1230.8 856.1L1204.2 855.5L1177.4 851.1L1152.1 841.7L1129.6 827.8L1110.5 810.6L1094.0 791.3L1079.3 770.6L1066.5 748.6L1056.9 725.0L1053.2 700.0L1057.8 675.1L1071.6 652.5L1093.5 634.3L1119.7 621.4L1146.2 612.7L1169.3 605.9L1188.0 598.1L1203.5 587.4L1218.5 573.8L1235.6 559.3L1256.3 547.1L1280.0 539.8L1305.0 538.7L1329.4 543.1L1352.4 551.4L1374.1 561.5L1395.1 572.5L1415.8 584.6L1435.4 598.7L1452.1 615.6L1464.1 635.2L1470.6 656.6L1472.4 678.5L1471.8 700.0Z" fill="none" stroke="%23F5F3EE" stroke-opacity="0.045" stroke-width="1.0"/><path d="M1510.6 700.0L1514.8 726.3L1518.0 754.2L1517.9 783.7L1511.5 813.6L1496.7 841.3L1473.2 864.2L1443.1 880.7L1409.6 890.8L1375.9 896.8L1343.5 901.4L1312.1 907.0L1280.0 914.2L1245.7 921.4L1208.9 925.5L1171.1 923.4L1135.0 913.5L1103.2 895.8L1077.4 872.2L1057.5 845.1L1042.6 816.5L1031.6 787.5L1024.4 758.2L1022.1 728.9L1025.9 700.0L1036.6 672.8L1053.3 648.4L1073.5 627.3L1093.9 608.7L1112.3 590.6L1128.3 571.0L1143.5 548.8L1161.1 524.9L1183.5 502.0L1211.8 483.7L1244.9 473.1L1280.0 471.5L1314.4 477.7L1346.5 489.0L1376.2 502.6L1404.6 516.5L1433.0 530.5L1461.3 545.9L1488.3 564.1L1511.8 586.2L1530.1 611.9L1542.4 640.2L1549.4 669.8L1552.8 700.0Z" fill="none" stroke="%23F5F3EE" stroke-opacity="0.045" stroke-width="1.0"/><path d="M1597.8 700.0L1599.4 735.7L1596.5 772.1L1587.0 808.1L1569.6 842.1L1543.9 872.1L1511.6 896.9L1475.4 916.4L1437.8 932.3L1400.2 946.7L1362.4 961.2L1322.7 975.8L1280.0 988.1L1234.3 994.8L1187.8 992.6L1143.7 979.8L1105.3 957.1L1074.7 927.4L1051.6 894.1L1034.3 860.3L1020.3 827.4L1008.4 795.6L998.5 764.1L992.0 732.2L990.4 700.0L994.4 668.0L1003.2 637.0L1015.2 606.8L1028.9 576.8L1043.9 546.0L1061.7 514.4L1084.3 483.2L1113.7 455.1L1150.1 433.5L1192.0 420.8L1236.3 417.9L1280.0 423.0L1321.3 433.1L1360.4 444.8L1398.7 456.4L1437.7 467.9L1477.5 481.2L1516.8 498.7L1552.4 522.4L1581.2 552.2L1601.3 586.9L1612.5 624.3L1616.2 662.4L1614.2 700.0Z" fill="none" stroke="%23F5F3EE" stroke-opacity="0.1" stroke-width="1.4"/><path d="M1664.8 700.0L1663.1 742.9L1656.2 785.7L1642.5 827.6L1620.6 867.2L1591.1 902.9L1555.5 934.2L1515.9 961.4L1474.0 985.6L1429.9 1007.5L1383.0 1026.7L1332.8 1041.2L1280.0 1047.9L1226.7 1044.2L1176.2 1029.2L1131.7 1004.3L1094.6 972.9L1064.3 938.9L1038.3 905.4L1013.7 873.7L988.6 843.0L963.4 811.5L940.5 777.3L922.9 740.0L913.0 700.0L911.8 658.8L918.4 617.6L931.3 577.2L949.1 537.6L972.0 499.1L1000.7 462.6L1036.3 430.1L1079.0 404.0L1127.1 386.3L1178.3 377.4L1229.8 375.8L1280.0 378.9L1329.0 383.9L1377.9 389.5L1427.9 396.6L1478.8 407.4L1528.4 424.9L1573.0 451.0L1608.8 485.5L1633.5 526.5L1646.8 570.9L1650.9 615.5L1648.8 658.7L1643.0 700.0Z" fill="none" stroke="%23F5F3EE" stroke-opacity="0.045" stroke-width="1.0"/><path d="M1722.8 700.0L1724.9 749.8L1720.0 800.2L1705.5 849.8L1680.4 896.5L1645.8 938.6L1603.8 975.3L1556.8 1006.7L1506.3 1033.2L1453.0 1054.9L1396.8 1070.7L1338.6 1078.6L1280.0 1077.0L1223.4 1065.5L1171.1 1045.5L1124.1 1019.9L1081.6 992.2L1041.1 964.6L1000.3 937.7L958.1 909.9L915.9 878.7L877.2 841.8L846.3 798.8L826.9 750.7L820.4 700.0L825.8 649.2L840.4 599.9L861.8 552.7L888.2 507.7L919.8 465.1L957.4 425.8L1001.5 391.5L1051.8 364.0L1106.6 344.2L1163.9 331.6L1221.9 324.6L1280.0 321.5L1338.6 321.6L1398.0 325.7L1457.4 336.0L1514.4 354.9L1565.3 384.0L1606.6 422.4L1636.3 467.6L1654.9 516.0L1665.2 564.4L1671.0 610.9L1675.4 655.8L1679.3 700.0Z" fill="none" stroke="%23F5F3EE" stroke-opacity="0.045" stroke-width="1.0"/><path d="M1794.2 700.0L1798.8 758.1L1790.8 816.3L1768.8 872.1L1733.8 922.7L1688.7 966.5L1637.1 1003.6L1582.1 1034.6L1524.9 1060.5L1465.9 1081.5L1405.0 1096.5L1342.6 1104.4L1280.0 1104.3L1218.6 1096.7L1159.2 1083.2L1101.7 1065.9L1044.9 1046.1L987.6 1023.9L929.9 997.5L874.2 964.7L824.5 923.5L785.5 874.1L760.7 818.3L751.2 759.2L755.1 700.0L768.9 642.8L789.0 588.2L813.0 535.6L841.0 484.6L874.4 435.5L915.1 389.9L964.0 349.9L1020.3 317.6L1082.0 293.7L1146.9 277.8L1213.2 268.7L1280.0 265.5L1346.8 268.5L1412.8 278.8L1475.9 298.0L1533.3 327.0L1582.5 364.9L1622.1 409.2L1652.9 456.8L1677.7 504.8L1699.9 552.2L1721.8 599.4L1743.4 648.1L1761.9 700.0Z" fill="none" stroke="%23F5F3EE" stroke-opacity="0.045" stroke-width="1.0"/><path d="M1866.1 700.0L1862.5 765.2L1842.5 828.1L1807.9 885.9L1762.5 936.8L1710.9 981.0L1656.5 1020.0L1600.9 1055.5L1543.7 1088.2L1483.4 1117.4L1419.1 1141.2L1350.9 1157.7L1280.0 1165.6L1208.0 1165.0L1136.0 1156.9L1064.5 1142.3L993.7 1121.5L924.8 1093.5L860.0 1057.0L802.9 1011.2L757.7 956.3L726.9 894.7L711.1 829.6L708.0 764.0L713.8 700.0L725.0 637.9L739.7 576.9L758.6 516.4L784.2 456.7L819.4 399.6L866.0 348.1L923.5 305.1L989.5 272.2L1060.6 249.7L1133.7 236.1L1207.2 229.8L1280.0 229.8L1351.8 236.3L1421.8 250.3L1488.3 272.6L1549.6 303.1L1604.6 340.5L1653.5 382.5L1698.0 427.3L1740.0 474.2L1780.5 523.8L1818.1 577.4L1849.3 636.3L1869.4 700.0Z" fill="none" stroke="%23F5F3EE" stroke-opacity="0.1" stroke-width="1.4"/><path d="M-20 760C300 600 620 880 1000 560S1500 640 1650 420" fill="none" stroke="%23F5F3EE" stroke-opacity="0.1" stroke-width="2" stroke-dasharray="2 11"/></svg>');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  header{
+    position:relative; z-index:1;
+    padding:22px 28px 14px;
+    border-bottom:1px solid var(--line);
+    display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;
+  }
+  header .mark{
+    font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:26px;
+    letter-spacing:0.02em; text-transform:uppercase; color:var(--cream);
+  }
+  header .mark span{color:var(--coral);}
+  header .tag{ font-size:12.5px; color:rgba(245,243,238,0.55); font-family:var(--mono); letter-spacing:0.02em;}
+  .app{
+    position:relative; z-index:1;
+    display:grid;
+    grid-template-columns: minmax(320px,420px) 1fr;
+    gap:0;
+    min-height:calc(100vh - 68px);
+  }
+  @media (max-width: 880px){ .app{grid-template-columns:1fr;} }
+
+  /* ---- Sidebar ---- */
+  .panel{
+    padding:22px 24px 60px;
+    border-right:1px solid var(--line);
+    overflow-y:auto;
+  }
+  .section{ margin-bottom:26px; }
+  .section h3{
+    font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px;
+    text-transform:uppercase; letter-spacing:0.09em; color:var(--coral);
+    margin:0 0 12px; display:flex; align-items:center; gap:8px;
+  }
+  .section h3::before{
+    content:''; width:14px; height:1px; background:var(--coral); display:inline-block;
+  }
+  .field{ margin-bottom:12px; }
+  .field label{
+    display:block; font-size:11.5px; text-transform:uppercase; letter-spacing:0.06em;
+    color:rgba(245,243,238,0.55); margin-bottom:6px; font-family:var(--mono);
+  }
+  .row{ display:flex; gap:10px; }
+  .row > *{ flex:1; }
+
+  input[type=file]{
+    width:100%; font-size:12.5px; color:var(--cream);
+    background:rgba(245,243,238,0.05); border:1px dashed var(--line);
+    padding:10px; border-radius:2px; cursor:pointer;
+  }
+  input[type=range]{ width:100%; accent-color:var(--coral); }
+  input[type=color]{
+    width:100%; height:34px; border:1px solid var(--line); background:none; padding:2px;
+    border-radius:2px; cursor:pointer;
+  }
+  select, input[type=number]{
+    width:100%; background:rgba(245,243,238,0.06); border:1px solid var(--line);
+    color:var(--cream); padding:8px 10px; font-size:13px; border-radius:2px; font-family:'Inter',sans-serif;
+  }
+  .btn{
+    background:var(--coral); color:var(--bg-deep); border:none;
+    font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px;
+    letter-spacing:0.03em; text-transform:uppercase; padding:12px 18px;
+    border-radius:2px; cursor:pointer; width:100%; transition:background 0.15s;
+  }
+  .btn:hover{ background:var(--coral-dim); }
+  .btn:disabled{ background:rgba(245,243,238,0.15); color:rgba(245,243,238,0.4); cursor:not-allowed; }
+  .btn.ghost{
+    background:transparent; border:1px solid var(--line); color:var(--cream);
+  }
+  .btn.ghost:hover{ border-color:var(--coral); color:var(--coral); }
+  .sport-btn{ font-size:13px; padding:10px 6px; display:flex; align-items:center; justify-content:center; gap:6px; }
+  .sport-btn.active{ background:var(--coral); color:var(--bg-deep); border-color:var(--coral); }
+  .sport-icon{ display:inline-flex; }
+  .chk{ display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:8px; cursor:pointer; }
+  .chk input{ accent-color:var(--coral); }
+  .stat-readout{
+    display:grid; grid-template-columns:1fr 1fr; gap:8px 14px; margin-top:10px;
+  }
+  .stat-readout div{
+    background:rgba(245,243,238,0.04); border:1px solid var(--line); padding:8px 10px; border-radius:2px;
+  }
+  .stat-readout .k{ font-size:10px; text-transform:uppercase; letter-spacing:0.06em; color:rgba(245,243,238,0.5); font-family:var(--mono); }
+  .stat-readout .v{ font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:18px; margin-top:2px; }
+  .hint{ font-size:12px; color:rgba(245,243,238,0.45); line-height:1.5; margin-top:4px; }
+  .divider{ height:1px; background:var(--line); margin:22px 0; }
+
+  /* ---- Stage ---- */
+  .stage-wrap{
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+    padding:30px 24px 40px; gap:16px;
+  }
+  .stage-frame{
+    position:relative;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5);
+    border:1px solid var(--line);
+  }
+  #stage{
+    display:block;
+    width:min(360px, 80vw);
+    height:auto;
+    background:#081117;
+    cursor:grab;
+    touch-action:none;
+  }
+  #stage.dragging{ cursor:grabbing; }
+  .stage-controls{
+    display:flex; gap:10px; align-items:center; width:min(360px,80vw);
+  }
+  .stage-controls .btn{ font-size:13px; padding:10px 14px; }
+  .time-readout{
+    font-family:var(--mono); font-size:12px; color:rgba(245,243,238,0.6);
+    white-space:nowrap;
+  }
+  .export-status{
+    font-family:var(--mono); font-size:12px; color:var(--coral); min-height:16px;
+  }
+  a.download-link{
+    color:var(--coral); font-family:var(--mono); font-size:13px; text-decoration:underline;
+  }
+</style>
+</head>
+<body>
+
+<div class="topo"></div>
+
+<header>
+  <div class="mark">Field<span>Report</span></div>
+  <div class="tag">by Fieldwork — background + GPX → exportable clip</div>
+</header>
+
+<div class="app">
+  <div class="panel">
+
+    <div class="section">
+      <h3>Background</h3>
+      <div class="field">
+        <label>Photo or video</label>
+        <input type="file" id="bgInput" accept="image/*,video/*">
+      </div>
+      <button class="btn ghost" id="bgClear">Remove background</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <h3>Route (.gpx)</h3>
+      <div class="field">
+        <label>Upload GPX file</label>
+        <input type="file" id="gpxInput" accept=".gpx">
+      </div>
+      <div id="gpxStats" class="stat-readout" style="display:none;">
+        <div><div class="k">Distance</div><div class="v" id="statDist">—</div></div>
+        <div><div class="k">Duration</div><div class="v" id="statDur">—</div></div>
+        <div><div class="k">Elev gain</div><div class="v" id="statElev">—</div></div>
+        <div><div class="k">Avg pace</div><div class="v" id="statPace">—</div></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <h3>Route style</h3>
+      <div class="row">
+        <div class="field">
+          <label>Line color</label>
+          <input type="color" id="routeColor" value="#F48876">
+        </div>
+        <div class="field">
+          <label>Line width</label>
+          <input type="range" id="routeWidth" min="2" max="18" value="7">
+        </div>
+      </div>
+      <div class="field">
+        <label>Scale <span id="scaleVal"></span></label>
+        <input type="range" id="routeScale" min="30" max="200" value="100">
+      </div>
+      <div class="hint">Drag the route directly on the canvas to reposition it.</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <h3>Title</h3>
+      <div class="field">
+        <label>Title text</label>
+        <input type="text" id="titleText" placeholder="e.g. Sunday Long Run" maxlength="40">
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Title color</label>
+          <input type="color" id="titleColor" value="#F5F3EE">
+        </div>
+        <div class="field">
+          <label>Title size</label>
+          <input type="range" id="titleSize" min="24" max="90" value="52">
+        </div>
+      </div>
+      <div class="field">
+        <label>Sport</label>
+        <div class="row" style="gap:8px;">
+          <button class="btn ghost sport-btn active" data-sport="run" style="width:auto;flex:1;"><span class="sport-icon"></span>Run</button>
+          <button class="btn ghost sport-btn" data-sport="hike" style="width:auto;flex:1;"><span class="sport-icon"></span>Hike</button>
+          <button class="btn ghost sport-btn" data-sport="bike" style="width:auto;flex:1;"><span class="sport-icon"></span>Bike</button>
+        </div>
+      </div>
+      <div class="hint">Drag the title on the canvas to reposition it. Leave the text blank to hide it.</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <h3>Stats overlay</h3>
+      <label class="chk"><input type="checkbox" id="showDist" checked> Distance</label>
+      <label class="chk"><input type="checkbox" id="showDur" checked> Duration</label>
+      <label class="chk"><input type="checkbox" id="showPace" checked> Pace</label>
+      <label class="chk"><input type="checkbox" id="showElev"> Elevation gain</label>
+      <div class="row">
+        <div class="field">
+          <label>Value color</label>
+          <input type="color" id="textColor" value="#F5F3EE">
+        </div>
+        <div class="field">
+          <label>Label color</label>
+          <input type="color" id="labelColor" value="#F48876">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Text size</label>
+          <input type="range" id="textSize" min="18" max="72" value="44">
+        </div>
+      </div>
+      <div class="hint">Drag the stats block on the canvas to reposition it.</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <h3>Animation & export</h3>
+      <div class="field">
+        <label>Clip length: <span id="durVal">6.0</span>s</label>
+        <input type="range" id="clipDuration" min="2" max="15" step="0.5" value="6">
+      </div>
+      <button class="btn" id="exportBtn">Export video</button>
+      <div class="export-status" id="exportStatus"></div>
+      <div id="downloadWrap"></div>
+      <div class="hint">Exports a flattened clip sized 1080×1920 (Stories/Reels ratio) — MP4 where the browser supports it, otherwise WebM. Import it into CapCut and layer your caption/audio there.</div>
+    </div>
+
+  </div>
+
+  <div class="stage-wrap">
+    <div class="stage-frame">
+      <canvas id="stage" width="1080" height="1920"></canvas>
+    </div>
+    <div class="stage-controls">
+      <button class="btn ghost" id="playBtn" style="width:auto;">▶ Preview</button>
+      <span class="time-readout" id="timeReadout">0.0s / 6.0s</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('stage');
+const ctx = canvas.getContext('2d');
+const CW = canvas.width, CH = canvas.height;
+
+// ---------- State ----------
+let bg = { type: null, el: null, url: null }; // type: 'image' | 'video'
+let route = {
+  points: null,
+  proj: null,
+  cum: null,
+  distKm: 0, durationSec: null, elevGain: 0, paceMinPerKm: null,
+  box: { x: 0.5, y: 0.42, scale: 1.0 },
+  color: '#F48876', width: 7
+};
+let statsBox = { x: 0.5, y: 0.78 };
+let titleBox = { x: 0.5, y: 0.13 };
+let titleStyle = { text: '', color: '#F5F3EE', size: 52, sport: 'run' };
+const SPORT_ICONS = {
+  run: [
+    { t:'circle', cx:17, cy:5, r:2 },
+    { t:'line', x1:15, y1:8, x2:11, y2:14 },
+    { t:'line', x1:11, y1:14, x2:6, y2:20 },
+    { t:'line', x1:11, y1:14, x2:16, y2:17 },
+    { t:'line', x1:16, y1:17, x2:19, y2:15 },
+    { t:'line', x1:15, y1:8, x2:19, y2:6 },
+    { t:'line', x1:13, y1:10, x2:9, y2:8 }
+  ],
+  hike: [
+    { t:'line', x1:3, y1:20, x2:9, y2:8 },
+    { t:'line', x1:9, y1:8, x2:15, y2:20 },
+    { t:'line', x1:11, y1:20, x2:17, y2:5 },
+    { t:'line', x1:17, y1:5, x2:22, y2:20 },
+    { t:'line', x1:17, y1:5, x2:17, y2:9 },
+    { t:'line', x1:17, y1:5, x2:20, y2:6.5 },
+    { t:'line', x1:17, y1:9, x2:20, y2:6.5 }
+  ],
+  bike: [
+    { t:'circle', cx:6, cy:17, r:3.3 },
+    { t:'circle', cx:18, cy:17, r:3.3 },
+    { t:'line', x1:6, y1:17, x2:11, y2:7 },
+    { t:'line', x1:11, y1:7, x2:11, y2:17 },
+    { t:'line', x1:11, y1:17, x2:6, y2:17 },
+    { t:'line', x1:11, y1:17, x2:15, y2:8 },
+    { t:'line', x1:15, y1:8, x2:18, y2:17 },
+    { t:'line', x1:11, y1:7, x2:15, y2:8 },
+    { t:'line', x1:15, y1:8, x2:17, y2:6 }
+  ]
+};
+
+function sportIconSVG(sport, size){
+  const segs = SPORT_ICONS[sport] || [];
+  const shapes = segs.map(seg => seg.t === 'circle'
+    ? `<circle cx="${seg.cx}" cy="${seg.cy}" r="${seg.r}"/>`
+    : `<line x1="${seg.x1}" y1="${seg.y1}" x2="${seg.x2}" y2="${seg.y2}"/>`
+  ).join('');
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${shapes}</svg>`;
+}
+
+function drawSportIconCanvas(sport, x, y, size, color){
+  const segs = SPORT_ICONS[sport];
+  if (!segs) return;
+  const scale = size / 24;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.8;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  segs.forEach(seg => {
+    ctx.beginPath();
+    if (seg.t === 'circle'){ ctx.arc(seg.cx, seg.cy, seg.r, 0, Math.PI*2); }
+    else { ctx.moveTo(seg.x1, seg.y1); ctx.lineTo(seg.x2, seg.y2); }
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
+document.querySelectorAll('.sport-btn').forEach(btn => {
+  const slot = btn.querySelector('.sport-icon');
+  if (slot) slot.innerHTML = sportIconSVG(btn.dataset.sport, 16);
+});
+let textStyle = { color: '#F5F3EE', labelColor: '#F48876', size: 44, show: { dist: true, dur: true, pace: true, elev: false } };
+
+let drag = null;
+let clipDuration = 6.0;
+let playing = false;
+let playStart = null;
+let recorder = null, recordedChunks = [];
+
+// ---------- Helpers ----------
+function haversine(lat1, lon1, lat2, lon2){
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLon = (lon2-lon1) * Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+function fmtDuration(sec){
+  if (sec == null) return '—';
+  sec = Math.round(sec);
+  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+  return h > 0 ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${m}:${String(s).padStart(2,'0')}`;
+}
+function fmtPace(minPerKm){
+  if (minPerKm == null || !isFinite(minPerKm)) return '—';
+  const m = Math.floor(minPerKm), s = Math.round((minPerKm-m)*60);
+  return `${m}:${String(s).padStart(2,'0')}/km`;
+}
+
+// ---------- GPX parsing ----------
+document.getElementById('gpxInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const text = await file.text();
+  const doc = new DOMParser().parseFromString(text, 'text/xml');
+  const trkpts = [...doc.querySelectorAll('trkpt')];
+  if (trkpts.length < 2){ alert('No track points found in this GPX file.'); return; }
+  const points = trkpts.map(pt => {
+    const eleEl = pt.querySelector('ele');
+    const timeEl = pt.querySelector('time');
+    return {
+      lat: parseFloat(pt.getAttribute('lat')),
+      lon: parseFloat(pt.getAttribute('lon')),
+      ele: eleEl ? parseFloat(eleEl.textContent) : null,
+      time: timeEl ? new Date(timeEl.textContent) : null
+    };
+  });
+  route.points = points;
+
+  let dist = 0;
+  const cumDist = [0];
+  for (let i=1;i<points.length;i++){
+    dist += haversine(points[i-1].lat, points[i-1].lon, points[i].lat, points[i].lon);
+    cumDist.push(dist);
+  }
+  route.distKm = dist;
+  route.cum = cumDist.map(d => dist > 0 ? d/dist : 0);
+
+  if (points[0].time && points[points.length-1].time){
+    route.durationSec = (points[points.length-1].time - points[0].time) / 1000;
+  } else {
+    route.durationSec = null;
+  }
+  route.paceMinPerKm = (route.durationSec && route.distKm > 0) ? (route.durationSec/60) / route.distKm : null;
+
+  let gain = 0;
+  for (let i=1;i<points.length;i++){
+    if (points[i].ele != null && points[i-1].ele != null){
+      const d = points[i].ele - points[i-1].ele;
+      if (d > 0) gain += d;
+    }
+  }
+  route.elevGain = gain;
+
+  const lats = points.map(p=>p.lat), lons = points.map(p=>p.lon);
+  const latMin = Math.min(...lats), latMax = Math.max(...lats);
+  const lonMin = Math.min(...lons), lonMax = Math.max(...lons);
+  const latMid = (latMin+latMax)/2;
+  const cosLat = Math.cos(latMid * Math.PI/180);
+  const rawX = points.map(p => (p.lon - lonMin) * cosLat);
+  const rawY = points.map(p => (latMax - p.lat));
+  const spanX = Math.max(...rawX) - Math.min(...rawX) || 1;
+  const spanY = Math.max(...rawY) - Math.min(...rawY) || 1;
+  const span = Math.max(spanX, spanY);
+  const offX = (span - spanX) / 2;
+  const offY = (span - spanY) / 2;
+  route.proj = rawX.map((x,i) => ({
+    x: (x + offX) / span,
+    y: (rawY[i] + offY) / span
+  }));
+
+  document.getElementById('gpxStats').style.display = 'grid';
+  document.getElementById('statDist').textContent = route.distKm.toFixed(2) + ' km';
+  document.getElementById('statDur').textContent = fmtDuration(route.durationSec);
+  document.getElementById('statElev').textContent = Math.round(route.elevGain) + ' m';
+  document.getElementById('statPace').textContent = fmtPace(route.paceMinPerKm);
+
+  drawFrame(currentAnimTime());
+});
+
+// ---------- Background upload ----------
+function loadAsElement(isVideo, src, timeoutMs){
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('timeout')), timeoutMs);
+    if (isVideo){
+      const vid = document.createElement('video');
+      vid.loop = true; vid.muted = true; vid.playsInline = true; vid.autoplay = false;
+      vid.addEventListener('loadedmetadata', () => { clearTimeout(t); resolve(vid); });
+      vid.addEventListener('error', () => { clearTimeout(t); reject(new Error('decode')); });
+      vid.src = src;
+      vid.load();
+    } else {
+      const img = new Image();
+      img.onload = () => { clearTimeout(t); resolve(img); };
+      img.onerror = () => { clearTimeout(t); reject(new Error('decode')); };
+      img.src = src;
+    }
+  });
+}
+
+document.getElementById('bgInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById('exportStatus');
+  const isVideo = file.type.startsWith('video/');
+  const sizeMb = (file.size / (1024*1024)).toFixed(1);
+  statusEl.textContent = `Loading ${file.name} (${sizeMb}MB)…`;
+
+  if (bg.url) { URL.revokeObjectURL(bg.url); bg.url = null; }
+
+  // Attempt 1: blob URL (fast, memory-efficient — should work in a normal browser tab)
+  let blobUrl = null;
+  try { blobUrl = URL.createObjectURL(file); } catch(err) { /* fall through */ }
+
+  if (blobUrl){
+    try {
+      const el = await loadAsElement(isVideo, blobUrl, isVideo ? 6000 : 4000);
+      bg = { type: isVideo ? 'video' : 'image', el, url: blobUrl };
+      drawFrame(playing ? currentAnimTime() : clipDuration);
+      statusEl.textContent = '';
+      return;
+    } catch(err){
+      URL.revokeObjectURL(blobUrl);
+      statusEl.textContent = `Blob load failed (${err.message}) — trying a fallback method…`;
+    }
+  }
+
+  // Attempt 2: data URL fallback — needed if the page is running somewhere
+  // (like an embedded preview) that restricts blob: URLs
+  try {
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('read failed'));
+      reader.readAsDataURL(file);
+    });
+    const el = await loadAsElement(isVideo, dataUrl, isVideo ? 15000 : 8000);
+    bg = { type: isVideo ? 'video' : 'image', el, url: null };
+    drawFrame(playing ? currentAnimTime() : clipDuration);
+    statusEl.textContent = '';
+  } catch(err){
+    statusEl.textContent = `Couldn't load this file (${err.message}). If you're viewing this inside the Claude chat window, try downloading the file and opening it directly in a browser tab instead — that's a more reliable test environment.`;
+  }
+});
+document.getElementById('bgClear').addEventListener('click', () => {
+  if (bg.url) URL.revokeObjectURL(bg.url);
+  bg = { type: null, el: null, url: null };
+  drawFrame(currentAnimTime());
+});
+
+// ---------- Style controls ----------
+document.getElementById('routeColor').addEventListener('input', e => { route.color = e.target.value; drawFrame(currentAnimTime()); });
+document.getElementById('routeWidth').addEventListener('input', e => { route.width = +e.target.value; drawFrame(currentAnimTime()); });
+document.getElementById('routeScale').addEventListener('input', e => {
+  route.box.scale = (+e.target.value)/100;
+  document.getElementById('scaleVal').textContent = e.target.value + '%';
+  drawFrame(currentAnimTime());
+});
+document.getElementById('textColor').addEventListener('input', e => { textStyle.color = e.target.value; drawFrame(currentAnimTime()); });
+document.getElementById('labelColor').addEventListener('input', e => { textStyle.labelColor = e.target.value; drawFrame(currentAnimTime()); });
+document.getElementById('textSize').addEventListener('input', e => { textStyle.size = +e.target.value; drawFrame(currentAnimTime()); });
+document.getElementById('titleText').addEventListener('input', e => { titleStyle.text = e.target.value; drawFrame(currentAnimTime()); });
+document.getElementById('titleColor').addEventListener('input', e => { titleStyle.color = e.target.value; drawFrame(currentAnimTime()); });
+document.getElementById('titleSize').addEventListener('input', e => { titleStyle.size = +e.target.value; drawFrame(currentAnimTime()); });
+document.querySelectorAll('.sport-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sport-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    titleStyle.sport = btn.dataset.sport;
+    drawFrame(currentAnimTime());
+  });
+});
+['showDist','showDur','showPace','showElev'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => {
+    textStyle.show = {
+      dist: document.getElementById('showDist').checked,
+      dur: document.getElementById('showDur').checked,
+      pace: document.getElementById('showPace').checked,
+      elev: document.getElementById('showElev').checked,
+    };
+    drawFrame(currentAnimTime());
+  });
+});
+document.getElementById('clipDuration').addEventListener('input', e => {
+  clipDuration = +e.target.value;
+  document.getElementById('durVal').textContent = clipDuration.toFixed(1);
+  updateTimeReadout(0);
+});
+
+// ---------- Dragging on canvas ----------
+function canvasCoords(evt){
+  const rect = canvas.getBoundingClientRect();
+  const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+  const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+  return {
+    x: (clientX - rect.left) / rect.width,
+    y: (clientY - rect.top) / rect.height
+  };
+}
+function dist2(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+
+function pointerDown(evt){
+  const p = canvasCoords(evt);
+  const candidates = [];
+  if (route.proj) candidates.push(['route', dist2(p, route.box)]);
+  candidates.push(['stats', dist2(p, statsBox)]);
+  if (titleStyle.text) candidates.push(['title', dist2(p, titleBox)]);
+  candidates.sort((a, b) => a[1] - b[1]);
+  if (candidates.length && candidates[0][1] < 0.28){
+    drag = candidates[0][0];
+    canvas.classList.add('dragging');
+  }
+}
+function pointerMove(evt){
+  if (!drag) return;
+  evt.preventDefault();
+  const p = canvasCoords(evt);
+  if (drag === 'route'){ route.box.x = Math.min(1,Math.max(0,p.x)); route.box.y = Math.min(1,Math.max(0,p.y)); }
+  if (drag === 'stats'){ statsBox.x = Math.min(1,Math.max(0,p.x)); statsBox.y = Math.min(1,Math.max(0,p.y)); }
+  if (drag === 'title'){ titleBox.x = Math.min(1,Math.max(0,p.x)); titleBox.y = Math.min(1,Math.max(0,p.y)); }
+  drawFrame(currentAnimTime());
+}
+function pointerUp(){ drag = null; canvas.classList.remove('dragging'); }
+canvas.addEventListener('mousedown', pointerDown);
+canvas.addEventListener('mousemove', pointerMove);
+window.addEventListener('mouseup', pointerUp);
+canvas.addEventListener('touchstart', pointerDown, {passive:true});
+canvas.addEventListener('touchmove', pointerMove, {passive:false});
+window.addEventListener('touchend', pointerUp);
+
+// ---------- Drawing ----------
+function drawTopoContours(){
+  ctx.save();
+  const cx = CW * 0.6, cy = CH * 0.32;
+  const rings = 15;
+  for (let i=0;i<rings;i++){
+    const r = 70 + i*72;
+    ctx.beginPath();
+    const steps = 140;
+    for (let s=0;s<=steps;s++){
+      const a = (s/steps) * Math.PI * 2;
+      const wobble = Math.sin(a*3 + i*1.4)*20 + Math.sin(a*5 + i*0.6)*11 + Math.sin(a*1.5 + i*0.9)*26;
+      const rr = r + wobble;
+      const x = cx + Math.cos(a) * rr;
+      const y = cy + Math.sin(a) * rr * 0.85;
+      if (s===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = i % 4 === 0 ? 'rgba(245,243,238,0.14)' : 'rgba(245,243,238,0.07)';
+    ctx.lineWidth = i % 4 === 0 ? 1.6 : 1.1;
+    ctx.stroke();
+    if (i % 3 === 1){
+      ctx.save();
+      ctx.translate(cx + (70 + i*72) * 0.72, cy - (70 + i*72) * 0.5);
+      ctx.rotate(-0.35);
+      ctx.fillStyle = 'rgba(245,243,238,0.32)';
+      ctx.font = "500 15px 'JetBrains Mono', monospace";
+      ctx.textAlign = 'left';
+      ctx.fillText(String(2200 + i*280), 0, 0);
+      ctx.restore();
+    }
+  }
+  // a couple of trail-style dotted paths threading through, for texture
+  ctx.setLineDash([2, 10]);
+  ctx.strokeStyle = 'rgba(245,243,238,0.18)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(CW*0.05, CH*0.75);
+  ctx.bezierCurveTo(CW*0.3, CH*0.6, CW*0.5, CH*0.85, CW*0.95, CH*0.55);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+function drawBackground(){
+  if (bg.type === 'image'){
+    const img = bg.el;
+    const scale = Math.max(CW/img.width, CH/img.height);
+    const w = img.width*scale, h = img.height*scale;
+    ctx.drawImage(img, (CW-w)/2, (CH-h)/2, w, h);
+  } else if (bg.type === 'video'){
+    const vid = bg.el;
+    if (vid.videoWidth){
+      const scale = Math.max(CW/vid.videoWidth, CH/vid.videoHeight);
+      const w = vid.videoWidth*scale, h = vid.videoHeight*scale;
+      ctx.drawImage(vid, (CW-w)/2, (CH-h)/2, w, h);
+    }
+  } else {
+    const grad = ctx.createLinearGradient(0,0,0,CH);
+    grad.addColorStop(0, '#163A36');
+    grad.addColorStop(1, '#0F2A28');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,CW,CH);
+    drawTopoContours();
+    ctx.fillStyle = 'rgba(245,243,238,0.45)';
+    ctx.font = '600 34px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Upload a background photo or video', CW/2, CH/2);
+  }
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  ctx.fillRect(0,0,CW,CH);
+}
+
+function routeFrac(t){
+  return Math.min(1, t / (clipDuration * 0.7));
+}
+
+function drawRoute(t){
+  if (!route.proj) return;
+  const boxSize = CW * 0.72 * route.box.scale;
+  const cx = route.box.x * CW, cy = route.box.y * CH;
+  const originX = cx - boxSize/2, originY = cy - boxSize/2;
+
+  const frac = routeFrac(t);
+  const pts = route.proj;
+  const cum = route.cum;
+  let cutIdx = pts.length - 1;
+  for (let i=0;i<cum.length;i++){ if (cum[i] > frac){ cutIdx = i; break; } }
+
+  ctx.save();
+  ctx.strokeStyle = route.color;
+  ctx.lineWidth = route.width;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  for (let i=0;i<=cutIdx;i++){
+    const px = originX + pts[i].x*boxSize, py = originY + pts[i].y*boxSize;
+    if (i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+
+  if (cutIdx < pts.length){
+    const hp = pts[cutIdx];
+    const hx = originX + hp.x*boxSize, hy = originY + hp.y*boxSize;
+    ctx.fillStyle = route.color;
+    ctx.beginPath();
+    ctx.arc(hx, hy, route.width*1.1, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(hx, hy, route.width*0.4, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function statLines(t){
+  const frac = routeFrac(t);
+  const lines = [];
+  if (textStyle.show.dist){
+    const animatedKm = route.distKm ? route.distKm * frac : 0;
+    lines.push({ label: 'DISTANCE', value: route.distKm ? animatedKm.toFixed(2) + ' KM' : '— KM' });
+  }
+  if (textStyle.show.dur) lines.push({ label: 'DURATION', value: fmtDuration(route.durationSec).toUpperCase() });
+  if (textStyle.show.pace) lines.push({ label: 'PACE', value: fmtPace(route.paceMinPerKm).toUpperCase() });
+  if (textStyle.show.elev) lines.push({ label: 'ELEV GAIN', value: Math.round(route.elevGain) + ' M' });
+  return lines;
+}
+
+function drawStats(t){
+  const lines = statLines(t);
+  if (lines.length === 0) return;
+  const fadeIn = Math.min(1, t / 0.6);
+  ctx.save();
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  const x = statsBox.x * CW;
+  let y = statsBox.y * CH;
+  const valueSize = textStyle.size;
+  const labelSize = Math.max(12, textStyle.size * 0.34);
+  const blockGap = valueSize * 1.5;
+
+  lines.forEach((line, i) => {
+    const blockY = y + i * blockGap;
+    ctx.globalAlpha = fadeIn;
+    ctx.font = `600 ${labelSize}px 'Inter', sans-serif`;
+    ctx.fillStyle = textStyle.labelColor;
+    ctx.fillText(line.label, x, blockY);
+    ctx.font = `600 ${valueSize}px 'Barlow Condensed', sans-serif`;
+    ctx.fillStyle = textStyle.color;
+    ctx.fillText(line.value, x, blockY + valueSize * 0.95);
+  });
+  ctx.restore();
+}
+
+function drawTitle(){
+  if (!titleStyle.text) return;
+  ctx.save();
+  ctx.textBaseline = 'alphabetic';
+  const x = titleBox.x * CW, y = titleBox.y * CH;
+  const textFont = `600 ${titleStyle.size}px 'Barlow Condensed', sans-serif`;
+
+  ctx.font = textFont;
+  const textStr = titleStyle.text.toUpperCase();
+  const textWidth = ctx.measureText(textStr).width;
+  const iconSize = titleStyle.size * 0.9;
+  const iconGap = titleStyle.size * 0.28;
+  const totalWidth = textWidth + iconSize + iconGap;
+  let startX = x - totalWidth / 2;
+
+  const iconY = y - iconSize * 0.82;
+  drawSportIconCanvas(titleStyle.sport, startX, iconY, iconSize, titleStyle.color);
+  startX += iconSize + iconGap;
+
+  ctx.textAlign = 'left';
+  ctx.font = textFont;
+  ctx.fillStyle = titleStyle.color;
+  ctx.fillText(textStr, startX, y);
+  ctx.restore();
+}
+
+function drawFrame(t){
+  ctx.clearRect(0,0,CW,CH);
+  drawBackground();
+  drawRoute(t);
+  drawTitle();
+  drawStats(t);
+}
+
+function currentAnimTime(){
+  if (!playing || playStart == null) return clipDuration;
+  return ((performance.now() - playStart) / 1000) % clipDuration;
+}
+
+function updateTimeReadout(t){
+  document.getElementById('timeReadout').textContent = `${t.toFixed(1)}s / ${clipDuration.toFixed(1)}s`;
+}
+
+// ---------- Playback loop ----------
+function loop(){
+  if (playing){
+    const t = currentAnimTime();
+    drawFrame(t);
+    updateTimeReadout(t);
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+document.getElementById('playBtn').addEventListener('click', () => {
+  playing = !playing;
+  document.getElementById('playBtn').textContent = playing ? '⏸ Pause' : '▶ Preview';
+  if (playing){
+    playStart = performance.now();
+    if (bg.type === 'video') bg.el.play();
+  } else {
+    if (bg.type === 'video') bg.el.pause();
+    drawFrame(currentAnimTime());
+    updateTimeReadout(0);
+  }
+});
+
+// ---------- Export ----------
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('exportBtn');
+  const statusEl = document.getElementById('exportStatus');
+  document.getElementById('downloadWrap').innerHTML = '';
+  btn.disabled = true;
+  statusEl.textContent = 'Recording…';
+
+  playing = false;
+  if (bg.type === 'video'){ bg.el.currentTime = 0; await bg.el.play(); }
+
+  const stream = canvas.captureStream(30);
+  recordedChunks = [];
+
+  const candidates = [
+    'video/mp4;codecs=avc1',
+    'video/mp4',
+    'video/webm;codecs=vp9',
+    'video/webm'
+  ];
+  let mimeType = candidates.find(t => MediaRecorder.isTypeSupported(t)) || 'video/webm';
+  const isMp4 = mimeType.startsWith('video/mp4');
+  const ext = isMp4 ? 'mp4' : 'webm';
+  const fileName = `field-report.${ext}`;
+
+  recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8_000_000 });
+  recorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+  recorder.onstop = async () => {
+    const blob = new Blob(recordedChunks, { type: isMp4 ? 'video/mp4' : 'video/webm' });
+    btn.disabled = false;
+    if (bg.type === 'video') bg.el.pause();
+
+    if (window.showSaveFilePicker){
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: fileName,
+          types: [{
+            description: isMp4 ? 'MP4 video' : 'WebM video',
+            accept: isMp4 ? { 'video/mp4': ['.mp4'] } : { 'video/webm': ['.webm'] }
+          }]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        statusEl.textContent = 'Saved — import it into CapCut over your own clip.';
+        return;
+      } catch (err){
+        if (err.name === 'AbortError'){
+          statusEl.textContent = 'Save cancelled.';
+          return;
+        }
+      }
+    }
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    document.getElementById('downloadWrap').innerHTML =
+      `<a class="download-link" href="${url}" download="${fileName}">If nothing downloaded, click here</a>`;
+    statusEl.textContent = isMp4
+      ? 'Done — check your downloads, then import into CapCut.'
+      : 'Done (WebM — your browser doesn\'t support MP4 recording). Desktop players and CapCut both handle WebM fine.';
+  };
+
+  const start = performance.now();
+  recorder.start();
+
+  function tick(){
+    const elapsed = (performance.now() - start) / 1000;
+    if (elapsed >= clipDuration){
+      recorder.stop();
+      return;
+    }
+    drawFrame(elapsed);
+    updateTimeReadout(elapsed);
+    statusEl.textContent = `Recording… ${elapsed.toFixed(1)}s / ${clipDuration.toFixed(1)}s`;
+    requestAnimationFrame(tick);
+  }
+  tick();
+});
+
+// ---------- initial paint ----------
+drawFrame(currentAnimTime());
+</script>
+</body>
+</html>
