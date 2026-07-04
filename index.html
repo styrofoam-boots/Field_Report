@@ -251,7 +251,7 @@
       <label class="chk"><input type="checkbox" id="showDist" checked> Distance</label>
       <label class="chk"><input type="checkbox" id="showDur" checked> Duration</label>
       <label class="chk"><input type="checkbox" id="showPace" checked> Pace</label>
-      <label class="chk"><input type="checkbox" id="showElev" checked> Elevation gain</label>
+      <label class="chk"><input type="checkbox" id="showElev"> Elevation gain</label>
       <div class="row">
         <div class="field">
           <label>Value color</label>
@@ -265,7 +265,7 @@
       <div class="row">
         <div class="field">
           <label>Text size</label>
-          <input type="range" id="textSize" min="18" max="72" value="44">
+          <input type="range" id="textSize" min="48" max="220" value="130">
         </div>
       </div>
       <div class="hint">Drag the stats block on the canvas to reposition it.</div>
@@ -390,9 +390,10 @@ document.querySelectorAll('.sport-btn').forEach(btn => {
   const slot = btn.querySelector('.sport-icon');
   if (slot) slot.innerHTML = sportIconSVG(btn.dataset.sport, 16);
 });
-let textStyle = { color: '#F5F3EE', labelColor: '#F48876', size: 44, show: { dist: true, dur: true, pace: true, elev: false } };
+let textStyle = { color: '#F5F3EE', labelColor: '#F48876', size: 130, show: { dist: true, dur: true, pace: true, elev: false } };
 
 let drag = null;
+let pinch = null;
 let clipDuration = 6.0;
 let playing = false;
 let playStart = null;
@@ -609,16 +610,23 @@ function canvasCoords(evt){
   };
 }
 function dist2(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+function clamp(v, min, max){ return Math.min(max, Math.max(min, v)); }
 
-function pointerDown(evt){
-  const p = canvasCoords(evt);
+function nearestElement(p){
   const candidates = [];
   if (route.proj) candidates.push(['route', dist2(p, route.box)]);
   candidates.push(['stats', dist2(p, statsBox)]);
   if (titleStyle.text) candidates.push(['title', dist2(p, titleBox)]);
   candidates.sort((a, b) => a[1] - b[1]);
-  if (candidates.length && candidates[0][1] < 0.28){
-    drag = candidates[0][0];
+  if (candidates.length && candidates[0][1] < 0.28) return candidates[0][0];
+  return null;
+}
+
+function pointerDown(evt){
+  const p = canvasCoords(evt);
+  const target = nearestElement(p);
+  if (target){
+    drag = target;
     canvas.classList.add('dragging');
   }
 }
@@ -635,9 +643,70 @@ function pointerUp(){ drag = null; canvas.classList.remove('dragging'); }
 canvas.addEventListener('mousedown', pointerDown);
 canvas.addEventListener('mousemove', pointerMove);
 window.addEventListener('mouseup', pointerUp);
-canvas.addEventListener('touchstart', pointerDown, {passive:true});
-canvas.addEventListener('touchmove', pointerMove, {passive:false});
-window.addEventListener('touchend', pointerUp);
+
+// ---------- Two-finger pinch to scale (route / stats / title) ----------
+function touchDist(t0, t1){
+  return Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
+}
+function touchMidCoords(t0, t1){
+  const rect = canvas.getBoundingClientRect();
+  const mx = (t0.clientX + t1.clientX) / 2, my = (t0.clientY + t1.clientY) / 2;
+  return { x: (mx - rect.left) / rect.width, y: (my - rect.top) / rect.height };
+}
+function startPinch(evt){
+  const [t0, t1] = evt.touches;
+  const mid = touchMidCoords(t0, t1);
+  const target = nearestElement(mid);
+  if (!target) return null;
+  const startDist = touchDist(t0, t1);
+  let startValue;
+  if (target === 'route') startValue = route.box.scale;
+  if (target === 'stats') startValue = textStyle.size;
+  if (target === 'title') startValue = titleStyle.size;
+  return { target, startDist, startValue };
+}
+function updatePinch(evt){
+  if (!pinch) return;
+  const [t0, t1] = evt.touches;
+  const ratio = touchDist(t0, t1) / pinch.startDist;
+  if (pinch.target === 'route'){
+    route.box.scale = clamp(pinch.startValue * ratio, 0.3, 2.0);
+    document.getElementById('routeScale').value = Math.round(route.box.scale * 100);
+    document.getElementById('scaleVal').textContent = Math.round(route.box.scale * 100) + '%';
+  } else if (pinch.target === 'stats'){
+    textStyle.size = clamp(pinch.startValue * ratio, 48, 220);
+    document.getElementById('textSize').value = Math.round(textStyle.size);
+  } else if (pinch.target === 'title'){
+    titleStyle.size = clamp(pinch.startValue * ratio, 24, 90);
+    document.getElementById('titleSize').value = Math.round(titleStyle.size);
+  }
+  drawFrame(currentAnimTime());
+}
+
+function handleTouchStart(evt){
+  if (evt.touches.length === 2){
+    drag = null;
+    pinch = startPinch(evt);
+  } else if (evt.touches.length === 1){
+    pinch = null;
+    pointerDown(evt);
+  }
+}
+function handleTouchMove(evt){
+  if (pinch && evt.touches.length === 2){
+    evt.preventDefault();
+    updatePinch(evt);
+  } else if (drag && evt.touches.length === 1){
+    pointerMove(evt);
+  }
+}
+function handleTouchEnd(evt){
+  if (evt.touches.length < 2) pinch = null;
+  if (evt.touches.length === 0) pointerUp();
+}
+canvas.addEventListener('touchstart', handleTouchStart, {passive:true});
+canvas.addEventListener('touchmove', handleTouchMove, {passive:false});
+window.addEventListener('touchend', handleTouchEnd);
 
 // ---------- Drawing ----------
 function drawTopoContours(){
