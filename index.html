@@ -218,6 +218,28 @@
     <div class="divider"></div>
 
     <div class="section">
+      <h3>Elevation Profile</h3>
+      <label class="chk"><input type="checkbox" id="showElevProfile" checked> Show profile</label>
+      <div class="row">
+        <div class="field">
+          <label>Fill color</label>
+          <input type="color" id="elevColor" value="#F48876">
+        </div>
+        <div class="field">
+          <label>Line width</label>
+          <input type="range" id="elevWidth" min="1" max="8" value="3">
+        </div>
+      </div>
+      <div class="field">
+        <label>Scale <span id="elevScaleVal"></span></label>
+        <input type="range" id="elevScale" min="30" max="200" value="100">
+      </div>
+      <div class="hint">Drag the profile on the canvas to reposition it. Fills in sync with the route as it draws.</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
       <h3>Title</h3>
       <div class="field">
         <label>Title text</label>
@@ -251,7 +273,7 @@
       <label class="chk"><input type="checkbox" id="showDist" checked> Distance</label>
       <label class="chk"><input type="checkbox" id="showDur" checked> Duration</label>
       <label class="chk"><input type="checkbox" id="showPace" checked> Pace</label>
-      <label class="chk"><input type="checkbox" id="showElev"> Elevation gain</label>
+      <label class="chk"><input type="checkbox" id="showElev" checked> Elevation gain</label>
       <div class="row">
         <div class="field">
           <label>Value color</label>
@@ -325,6 +347,8 @@ let route = {
 let statsBox = { x: 0.5, y: 0.78 };
 let titleBox = { x: 0.5, y: 0.13 };
 let titleStyle = { text: '', color: '#F5F3EE', size: 52, sport: 'run' };
+let elevBox = { x: 0.5, y: 0.60, scale: 1.0 };
+let elevStyle = { color: '#F48876', width: 3, show: true };
 const SPORT_ICONS = {
   run: [
     { t:'circle', cx:17, cy:5, r:2 },
@@ -390,7 +414,7 @@ document.querySelectorAll('.sport-btn').forEach(btn => {
   const slot = btn.querySelector('.sport-icon');
   if (slot) slot.innerHTML = sportIconSVG(btn.dataset.sport, 16);
 });
-let textStyle = { color: '#F5F3EE', labelColor: '#F48876', size: 130, show: { dist: true, dur: true, pace: true, elev: false } };
+let textStyle = { color: '#F5F3EE', labelColor: '#F48876', size: 130, show: { dist: true, dur: true, pace: true, elev: true } };
 
 let drag = null;
 let pinch = null;
@@ -446,23 +470,67 @@ document.getElementById('gpxInput').addEventListener('change', async (e) => {
     cumDist.push(dist);
   }
   route.distKm = dist;
+  route.cumDistKm = cumDist; // raw km at each point (for direct lookup, not just fraction)
   route.cum = cumDist.map(d => dist > 0 ? d/dist : 0);
 
-  if (points[0].time && points[points.length-1].time){
+  const hasTime = points.every(p => p.time) && points[points.length-1].time > points[0].time;
+  if (hasTime){
     route.durationSec = (points[points.length-1].time - points[0].time) / 1000;
+    const startMs = points[0].time.getTime();
+    route.cumTimeMs = points.map(p => p.time.getTime() - startMs);
+    // real-elapsed-time fraction per point — used instead of distance fraction so the
+    // on-screen reveal speed matches actual pacing (slows through climbs, etc.)
+    const totalMs = route.cumTimeMs[route.cumTimeMs.length-1] || 1;
+    route.timeCum = route.cumTimeMs.map(ms => ms / totalMs);
   } else {
     route.durationSec = null;
+    route.cumTimeMs = null;
+    route.timeCum = null; // fall back to distance-based reveal (set below)
   }
   route.paceMinPerKm = (route.durationSec && route.distKm > 0) ? (route.durationSec/60) / route.distKm : null;
 
+  // cumulative elevation gain per point — monotonic, only rises on actual climbs
   let gain = 0;
+  const elevGainCum = [0];
   for (let i=1;i<points.length;i++){
     if (points[i].ele != null && points[i-1].ele != null){
       const d = points[i].ele - points[i-1].ele;
       if (d > 0) gain += d;
     }
+    elevGainCum.push(gain);
   }
   route.elevGain = gain;
+  route.elevGainCum = elevGainCum;
+
+  // smoothed elevation curve for the profile chart — raw GPX elevation is
+  // often jittery, so average over a small window before plotting
+  const rawEle = points.map(p => p.ele);
+  const smoothWindow = 4;
+  route.elevSmooth = rawEle.map((_, i) => {
+    const lo = Math.max(0, i - smoothWindow), hi = Math.min(rawEle.length - 1, i + smoothWindow);
+    let sum = 0, count = 0;
+    for (let j=lo; j<=hi; j++){ if (rawEle[j] != null){ sum += rawEle[j]; count++; } }
+    return count ? sum / count : null;
+  });
+  const validEle = route.elevSmooth.filter(e => e != null);
+  route.hasElevation = validEle.length > points.length * 0.5;
+  route.elevMin = validEle.length ? Math.min(...validEle) : 0;
+  route.elevMax = validEle.length ? Math.max(...validEle) : 1;
+
+  // smoothed local pace per point (min/km), using a rolling time+distance window
+  // to avoid GPS jitter — only meaningful if the GPX has real timestamps
+  if (hasTime){
+    const windowPts = 6;
+    route.paceLocal = points.map((p, i) => {
+      const lo = Math.max(0, i - windowPts), hi = Math.min(points.length - 1, i + windowPts);
+      const dKm = route.cumDistKm[hi] - route.cumDistKm[lo];
+      const dMs = route.cumTimeMs[hi] - route.cumTimeMs[lo];
+      if (dKm <= 0.005 || dMs <= 0) return route.paceMinPerKm; // fall back when window is degenerate
+      return (dMs / 60000) / dKm;
+    });
+  } else {
+    route.paceLocal = null;
+  }
 
   const lats = points.map(p=>p.lat), lons = points.map(p=>p.lon);
   const latMin = Math.min(...lats), latMax = Math.max(...lats);
@@ -568,6 +636,14 @@ document.getElementById('routeScale').addEventListener('input', e => {
   document.getElementById('scaleVal').textContent = e.target.value + '%';
   drawFrame(currentAnimTime());
 });
+document.getElementById('showElevProfile').addEventListener('change', e => { elevStyle.show = e.target.checked; drawFrame(currentAnimTime()); });
+document.getElementById('elevColor').addEventListener('input', e => { elevStyle.color = e.target.value; drawFrame(currentAnimTime()); });
+document.getElementById('elevWidth').addEventListener('input', e => { elevStyle.width = +e.target.value; drawFrame(currentAnimTime()); });
+document.getElementById('elevScale').addEventListener('input', e => {
+  elevBox.scale = (+e.target.value)/100;
+  document.getElementById('elevScaleVal').textContent = e.target.value + '%';
+  drawFrame(currentAnimTime());
+});
 document.getElementById('textColor').addEventListener('input', e => { textStyle.color = e.target.value; drawFrame(currentAnimTime()); });
 document.getElementById('labelColor').addEventListener('input', e => { textStyle.labelColor = e.target.value; drawFrame(currentAnimTime()); });
 document.getElementById('textSize').addEventListener('input', e => { textStyle.size = +e.target.value; drawFrame(currentAnimTime()); });
@@ -617,16 +693,31 @@ function nearestElement(p){
   if (route.proj) candidates.push(['route', dist2(p, route.box)]);
   candidates.push(['stats', dist2(p, statsBox)]);
   if (titleStyle.text) candidates.push(['title', dist2(p, titleBox)]);
+  if (elevStyle.show && route.hasElevation) candidates.push(['elev', dist2(p, elevBox)]);
   candidates.sort((a, b) => a[1] - b[1]);
   if (candidates.length && candidates[0][1] < 0.28) return candidates[0][0];
   return null;
 }
+function getBoxRef(target){
+  if (target === 'route') return route.box;
+  if (target === 'stats') return statsBox;
+  if (target === 'title') return titleBox;
+  if (target === 'elev') return elevBox;
+  return null;
+}
+
+let dragOffset = { dx: 0, dy: 0 };
 
 function pointerDown(evt){
   const p = canvasCoords(evt);
   const target = nearestElement(p);
   if (target){
     drag = target;
+    const box = getBoxRef(target);
+    // remember the offset between the touch point and the element's anchor,
+    // so the drag moves relative to where you grabbed it instead of
+    // snapping the anchor straight to your finger
+    dragOffset = { dx: box.x - p.x, dy: box.y - p.y };
     canvas.classList.add('dragging');
   }
 }
@@ -634,9 +725,11 @@ function pointerMove(evt){
   if (!drag) return;
   evt.preventDefault();
   const p = canvasCoords(evt);
-  if (drag === 'route'){ route.box.x = Math.min(1,Math.max(0,p.x)); route.box.y = Math.min(1,Math.max(0,p.y)); }
-  if (drag === 'stats'){ statsBox.x = Math.min(1,Math.max(0,p.x)); statsBox.y = Math.min(1,Math.max(0,p.y)); }
-  if (drag === 'title'){ titleBox.x = Math.min(1,Math.max(0,p.x)); titleBox.y = Math.min(1,Math.max(0,p.y)); }
+  const box = getBoxRef(drag);
+  if (box){
+    box.x = clamp(p.x + dragOffset.dx, 0, 1);
+    box.y = clamp(p.y + dragOffset.dy, 0, 1);
+  }
   drawFrame(currentAnimTime());
 }
 function pointerUp(){ drag = null; canvas.classList.remove('dragging'); }
@@ -644,7 +737,7 @@ canvas.addEventListener('mousedown', pointerDown);
 canvas.addEventListener('mousemove', pointerMove);
 window.addEventListener('mouseup', pointerUp);
 
-// ---------- Two-finger pinch to scale (route / stats / title) ----------
+// ---------- Two-finger pinch to scale (route / stats / title / elevation profile) ----------
 function touchDist(t0, t1){
   return Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
 }
@@ -663,6 +756,7 @@ function startPinch(evt){
   if (target === 'route') startValue = route.box.scale;
   if (target === 'stats') startValue = textStyle.size;
   if (target === 'title') startValue = titleStyle.size;
+  if (target === 'elev') startValue = elevBox.scale;
   return { target, startDist, startValue };
 }
 function updatePinch(evt){
@@ -679,6 +773,10 @@ function updatePinch(evt){
   } else if (pinch.target === 'title'){
     titleStyle.size = clamp(pinch.startValue * ratio, 24, 90);
     document.getElementById('titleSize').value = Math.round(titleStyle.size);
+  } else if (pinch.target === 'elev'){
+    elevBox.scale = clamp(pinch.startValue * ratio, 0.3, 2.0);
+    document.getElementById('elevScale').value = Math.round(elevBox.scale * 100);
+    document.getElementById('elevScaleVal').textContent = Math.round(elevBox.scale * 100) + '%';
   }
   drawFrame(currentAnimTime());
 }
@@ -785,17 +883,28 @@ function routeFrac(t){
   return Math.min(1, t / (clipDuration * 0.7));
 }
 
+// Which GPX point index has the reveal "reached" at clip-time t. Uses the
+// real elapsed-time fraction per point when the GPX has timestamps, so the
+// on-screen speed matches actual pacing — climbs and slow stretches take
+// proportionally longer, fast flat/downhill sections fly by. Falls back to
+// distance-fraction if there's no time data to work with.
+function getCutIdx(t){
+  if (!route.proj) return 0;
+  const frac = routeFrac(t);
+  const cumArr = route.timeCum || route.cum;
+  let cutIdx = cumArr.length - 1;
+  for (let i=0;i<cumArr.length;i++){ if (cumArr[i] > frac){ cutIdx = i; break; } }
+  return cutIdx;
+}
+
 function drawRoute(t){
   if (!route.proj) return;
   const boxSize = CW * 0.72 * route.box.scale;
   const cx = route.box.x * CW, cy = route.box.y * CH;
   const originX = cx - boxSize/2, originY = cy - boxSize/2;
 
-  const frac = routeFrac(t);
   const pts = route.proj;
-  const cum = route.cum;
-  let cutIdx = pts.length - 1;
-  for (let i=0;i<cum.length;i++){ if (cum[i] > frac){ cutIdx = i; break; } }
+  const cutIdx = getCutIdx(t);
 
   ctx.save();
   ctx.strokeStyle = route.color;
@@ -825,15 +934,32 @@ function drawRoute(t){
 }
 
 function statLines(t){
-  const frac = routeFrac(t);
   const lines = [];
-  if (textStyle.show.dist){
-    const animatedKm = route.distKm ? route.distKm * frac : 0;
-    lines.push({ label: 'DISTANCE', value: route.distKm ? animatedKm.toFixed(2) + ' KM' : '— KM' });
+  if (!route.proj){
+    if (textStyle.show.dist) lines.push({ label: 'DISTANCE', value: '— KM' });
+    if (textStyle.show.dur) lines.push({ label: 'DURATION', value: '—' });
+    if (textStyle.show.pace) lines.push({ label: 'PACE', value: '—' });
+    if (textStyle.show.elev) lines.push({ label: 'ELEV GAIN', value: '— M' });
+    return lines;
   }
-  if (textStyle.show.dur) lines.push({ label: 'DURATION', value: fmtDuration(route.durationSec).toUpperCase() });
-  if (textStyle.show.pace) lines.push({ label: 'PACE', value: fmtPace(route.paceMinPerKm).toUpperCase() });
-  if (textStyle.show.elev) lines.push({ label: 'ELEV GAIN', value: Math.round(route.elevGain) + ' M' });
+  const cutIdx = getCutIdx(t);
+
+  if (textStyle.show.dist){
+    const animatedKm = route.cumDistKm ? route.cumDistKm[cutIdx] : 0;
+    lines.push({ label: 'DISTANCE', value: animatedKm.toFixed(2) + ' KM' });
+  }
+  if (textStyle.show.dur){
+    const animatedSec = route.cumTimeMs ? route.cumTimeMs[cutIdx] / 1000 : route.durationSec;
+    lines.push({ label: 'DURATION', value: fmtDuration(animatedSec).toUpperCase() });
+  }
+  if (textStyle.show.pace){
+    const animatedPace = route.paceLocal ? route.paceLocal[cutIdx] : route.paceMinPerKm;
+    lines.push({ label: 'PACE', value: fmtPace(animatedPace).toUpperCase() });
+  }
+  if (textStyle.show.elev){
+    const animatedElev = route.elevGainCum ? route.elevGainCum[cutIdx] : route.elevGain;
+    lines.push({ label: 'ELEV GAIN', value: Math.round(animatedElev) + ' M' });
+  }
   return lines;
 }
 
@@ -889,10 +1015,67 @@ function drawTitle(){
   ctx.restore();
 }
 
+function hexToRgba(hex, alpha){
+  const h = hex.replace('#','');
+  const r = parseInt(h.substring(0,2),16), g = parseInt(h.substring(2,4),16), b = parseInt(h.substring(4,6),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function drawElevProfile(t){
+  if (!elevStyle.show || !route.proj || !route.hasElevation) return;
+  const cutIdx = getCutIdx(t);
+  const baseW = CW * 0.82, baseH = CW * 0.22;
+  const w = baseW * elevBox.scale, h = baseH * elevBox.scale;
+  const cx = elevBox.x * CW, cy = elevBox.y * CH;
+  const originX = cx - w/2, originY = cy - h/2;
+  const range = Math.max(1, route.elevMax - route.elevMin);
+
+  const xAt = (i) => originX + (route.cumDistKm[i] / route.distKm) * w;
+  const yAt = (i) => {
+    const e = route.elevSmooth[i];
+    const norm = e == null ? 0 : (e - route.elevMin) / range;
+    return originY + h - norm * h;
+  };
+
+  const topPts = [];
+  for (let i=0; i<=cutIdx; i++) topPts.push([xAt(i), yAt(i)]);
+  if (topPts.length < 2) return;
+
+  ctx.save();
+
+  // filled area under the curve, up to however far the reveal has reached
+  ctx.beginPath();
+  topPts.forEach(([x,y], i) => { i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y); });
+  ctx.lineTo(topPts[topPts.length-1][0], originY + h);
+  ctx.lineTo(topPts[0][0], originY + h);
+  ctx.closePath();
+  ctx.fillStyle = hexToRgba(elevStyle.color, 0.28);
+  ctx.fill();
+
+  // top line only
+  ctx.beginPath();
+  topPts.forEach(([x,y], i) => { i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y); });
+  ctx.strokeStyle = elevStyle.color;
+  ctx.lineWidth = elevStyle.width;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // marker synced to the same point the route dot is at
+  const [hx, hy] = topPts[topPts.length-1];
+  ctx.fillStyle = elevStyle.color;
+  ctx.beginPath(); ctx.arc(hx, hy, elevStyle.width * 1.5, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(hx, hy, elevStyle.width * 0.55, 0, Math.PI*2); ctx.fill();
+
+  ctx.restore();
+}
+
 function drawFrame(t){
   ctx.clearRect(0,0,CW,CH);
   drawBackground();
   drawRoute(t);
+  drawElevProfile(t);
   drawTitle();
   drawStats(t);
 }
