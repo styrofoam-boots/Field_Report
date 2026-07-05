@@ -953,7 +953,8 @@ function statLines(t){
     lines.push({ label: 'DURATION', value: fmtDuration(animatedSec).toUpperCase() });
   }
   if (textStyle.show.pace){
-    const animatedPace = route.paceLocal ? route.paceLocal[cutIdx] : route.paceMinPerKm;
+    const isComplete = cutIdx >= route.points.length - 1;
+    const animatedPace = (route.paceLocal && !isComplete) ? route.paceLocal[cutIdx] : route.paceMinPerKm;
     lines.push({ label: 'PACE', value: fmtPace(animatedPace).toUpperCase() });
   }
   if (textStyle.show.elev){
