@@ -131,6 +131,20 @@
     box-shadow:0 20px 60px rgba(0,0,0,0.5);
     border:1px solid var(--line);
   }
+  .safe-zone-overlay{
+    position:absolute;
+    top:11.46%; bottom:22.4%; left:1.5%; right:9.26%;
+    border:2px dashed rgba(245,243,238,0.55);
+    pointer-events:none;
+    z-index:2;
+  }
+  .safe-zone-overlay::after{
+    content:'SAFE ZONE';
+    position:absolute; top:-10px; left:8px;
+    background:var(--bg-deep); padding:0 6px;
+    font-family:var(--mono); font-size:9px; letter-spacing:0.06em;
+    color:rgba(245,243,238,0.55);
+  }
   #stage{
     display:block;
     width:min(360px, 80vw);
@@ -291,7 +305,7 @@
       <div class="row">
         <div class="field">
           <label>Text size</label>
-          <input type="range" id="textSize" min="48" max="220" value="130">
+          <input type="range" id="textSize" min="48" max="220" value="100">
         </div>
       </div>
       <div class="hint">Drag the stats block on the canvas to reposition it.</div>
@@ -316,10 +330,12 @@
   <div class="stage-wrap">
     <div class="stage-frame">
       <canvas id="stage" width="1080" height="1920"></canvas>
+      <div class="safe-zone-overlay" id="safeZoneOverlay"></div>
     </div>
     <div class="stage-controls">
       <button class="btn ghost" id="playBtn" style="width:auto;">▶ Preview</button>
       <span class="time-readout" id="timeReadout">0.0s / 6.0s</span>
+      <label class="chk" style="margin:0;"><input type="checkbox" id="safeZoneToggle" checked> Safe zone</label>
     </div>
   </div>
 </div>
@@ -348,7 +364,7 @@ let route = {
   box: { x: 0.5, y: 0.42, scale: 1.0 },
   color: '#F48876', width: 7
 };
-let statsBox = { x: 0.5, y: 0.78 };
+let statsBox = { x: 0.06, y: 0.44 };
 let titleBox = { x: 0.5, y: 0.13 };
 let titleStyle = { text: '', color: '#F5F3EE', size: 52, sport: 'run' };
 let elevBox = { x: 0.5, y: 0.60, scale: 1.0 };
@@ -418,7 +434,7 @@ document.querySelectorAll('.sport-btn').forEach(btn => {
   const slot = btn.querySelector('.sport-icon');
   if (slot) slot.innerHTML = sportIconSVG(btn.dataset.sport, 16);
 });
-let textStyle = { color: '#F5F3EE', labelColor: '#F48876', size: 130, show: { dist: true, dur: true, pace: true, elev: true } };
+let textStyle = { color: '#F5F3EE', labelColor: '#F48876', size: 100, show: { dist: true, dur: true, pace: true, elev: true } };
 
 let drag = null;
 let pinch = null;
@@ -1112,6 +1128,9 @@ function loop(){
 }
 requestAnimationFrame(loop);
 
+document.getElementById('safeZoneToggle').addEventListener('change', e => {
+  document.getElementById('safeZoneOverlay').style.display = e.target.checked ? 'block' : 'none';
+});
 document.getElementById('playBtn').addEventListener('click', () => {
   playing = !playing;
   document.getElementById('playBtn').textContent = playing ? '⏸ Pause' : '▶ Preview';
